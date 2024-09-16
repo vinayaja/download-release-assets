@@ -1,0 +1,22 @@
+name: "Download Release Assets"
+description: "Download assets from Github Release"
+author: "Vinayak Jadhav"
+
+inputs:
+  gh-token:
+    description: "Github Token or Pat Token"
+    required: true
+  release-tag:
+    description: "Release Tag"
+    required: true
+  asset-name:
+    description: "asset name"
+    required: true
+
+runs:
+  using: "node20"
+  main: "dist/index.js"
+
+branding:
+  icon: "check-square"
+  color: "white"
