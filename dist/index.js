@@ -31124,7 +31124,7 @@ async function run() {
             }
         })).data);
         for (var assetId of assetIds) {
-            console.log(`Uploading asset ${assetId}`);
+            console.log(`Uploading asset ${assetId.id}`);
         }
         ;
     }

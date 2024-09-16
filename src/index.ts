@@ -32,7 +32,7 @@ export async function run() {
 
         for(var assetId of assetIds)
         {
-            console.log(`Uploading asset ${assetId}`);
+            console.log(`Uploading asset ${assetId.id}`);
 
         };
 
