@@ -9,7 +9,7 @@ inputs:
   release-tag:
     description: "Release Tag"
     required: true
-  asset-name:
+  asset-names:
     description: "asset name"
     required: true
 

@@ -31105,7 +31105,6 @@ async function run() {
     const assetNames = (0, core_1.getInput)("asset-names");
     const octoKit = (0, github_1.getOctokit)(token);
     try {
-        const fs = __nccwpck_require__(7147);
         const releaseId = (await octoKit.rest.repos.getReleaseByTag({
             owner: github_1.context.repo.owner,
             repo: github_1.context.repo.repo,
@@ -31115,16 +31114,41 @@ async function run() {
             }
         })).data.id;
         const allAssetNames = assetNames.split(',');
-        let assetIds = ((await octoKit.rest.repos.listReleaseAssets({
+        let assetIds = (await octoKit.rest.repos.listReleaseAssets({
             owner: github_1.context.repo.owner,
             repo: github_1.context.repo.repo,
             release_id: releaseId,
             headers: {
                 'X-GitHub-Api-Version': '2022-11-28'
             }
-        })).data);
+        })).data;
         for (var assetId of assetIds) {
-            console.log(`Uploading asset ${assetId.id}`);
+            let asset = (await octoKit.rest.repos.getReleaseAsset({
+                owner: github_1.context.repo.owner,
+                repo: github_1.context.repo.repo,
+                release_id: releaseId,
+                asset_id: assetId.id,
+                headers: {
+                    'X-GitHub-Api-Version': '2022-11-28'
+                }
+            })).data;
+            if (allAssetNames.includes(asset.name)) {
+                const fs = __nccwpck_require__(7147);
+                const https = __nccwpck_require__(5687);
+                const headers = { 'accept': 'application/octet-stream' };
+                const request = https.get(asset.browser_download_url, { headers: headers }, (response) => {
+                    const filePath = `${process.env.GITHUB_WORKSPACE}/${asset.name}`;
+                    const fileStream = fs.createWriteStream(filePath);
+                    response.pipe(fileStream);
+                    fileStream.on('finish', () => {
+                        fileStream.close();
+                        console.log(`Downloaded asset to ${filePath}`);
+                    });
+                });
+                request.on('error', (err) => {
+                    console.error(`Error: ${err.message}`);
+                });
+            }
         }
         ;
     }
