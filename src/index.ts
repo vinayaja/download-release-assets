@@ -48,6 +48,10 @@ export async function run() {
                 const https = require('https');
                 const headers = { 'accept':'application/octet-stream' };
                 
+                if (!fs.existsSync(path)){
+                    fs.mkdirSync(path, { recursive: true });
+                }
+                
                 const request = https.get(asset.browser_download_url, { headers: headers }, (response:any) => {
                     const filePath = `${path}/${asset.name}`;
                     const fileStream = fs.createWriteStream(filePath);

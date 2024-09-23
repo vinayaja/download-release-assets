@@ -31138,6 +31138,9 @@ async function run() {
                 const fs = __nccwpck_require__(7147);
                 const https = __nccwpck_require__(5687);
                 const headers = { 'accept': 'application/octet-stream' };
+                if (!fs.existsSync(path)) {
+                    fs.mkdirSync(path, { recursive: true });
+                }
                 const request = https.get(asset.browser_download_url, { headers: headers }, (response) => {
                     const filePath = `${path}/${asset.name}`;
                     const fileStream = fs.createWriteStream(filePath);
