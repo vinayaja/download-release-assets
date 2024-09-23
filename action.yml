@@ -10,8 +10,14 @@ inputs:
     description: "Release Tag"
     required: true
   asset-names:
-    description: "asset name"
+    description: "Name of the asset to download"
     required: true
+  path:
+    description: "Destination path. Defaults to $GITHUB_WORKSPACE"
+    required: false
+  repository:
+    description: "The repository owner and the repository name joined together by "/"."
+    required: false
 
 runs:
   using: "node20"

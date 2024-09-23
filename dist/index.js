@@ -31103,11 +31103,13 @@ async function run() {
     const token = (0, core_1.getInput)("gh-token");
     const releaseTag = (0, core_1.getInput)("release-tag");
     const assetNames = (0, core_1.getInput)("asset-names");
+    const path = (0, core_1.getInput)("path") || `${process.env.GITHUB_WORKSPACE}`;
+    const repository = (0, core_1.getInput)("path") || `${github_1.context.repo.owner}/${github_1.context.repo.repo}`;
     const octoKit = (0, github_1.getOctokit)(token);
     try {
         const releaseId = (await octoKit.rest.repos.getReleaseByTag({
-            owner: github_1.context.repo.owner,
-            repo: github_1.context.repo.repo,
+            owner: repository.split("/")[0],
+            repo: repository.split("/")[1],
             tag: releaseTag,
             headers: {
                 'X-GitHub-Api-Version': '2022-11-28'
@@ -31115,8 +31117,8 @@ async function run() {
         })).data.id;
         const allAssetNames = assetNames.split(',');
         let assetIds = (await octoKit.rest.repos.listReleaseAssets({
-            owner: github_1.context.repo.owner,
-            repo: github_1.context.repo.repo,
+            owner: repository.split("/")[0],
+            repo: repository.split("/")[1],
             release_id: releaseId,
             headers: {
                 'X-GitHub-Api-Version': '2022-11-28'
@@ -31124,8 +31126,8 @@ async function run() {
         })).data;
         for (var assetId of assetIds) {
             let asset = (await octoKit.rest.repos.getReleaseAsset({
-                owner: github_1.context.repo.owner,
-                repo: github_1.context.repo.repo,
+                owner: repository.split("/")[0],
+                repo: repository.split("/")[1],
                 release_id: releaseId,
                 asset_id: assetId.id,
                 headers: {
@@ -31137,7 +31139,7 @@ async function run() {
                 const https = __nccwpck_require__(5687);
                 const headers = { 'accept': 'application/octet-stream' };
                 const request = https.get(asset.browser_download_url, { headers: headers }, (response) => {
-                    const filePath = `${process.env.GITHUB_WORKSPACE}/${asset.name}`;
+                    const filePath = `${path}/${asset.name}`;
                     const fileStream = fs.createWriteStream(filePath);
                     response.pipe(fileStream);
                     fileStream.on('finish', () => {
@@ -31149,6 +31151,7 @@ async function run() {
                     console.error(`Error: ${err.message}`);
                 });
             }
+            ;
         }
         ;
     }

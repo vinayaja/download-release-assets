@@ -7,6 +7,8 @@ Simple GitHub Action to Upload assets to release as artifacts
 - `gh-token` - Github Token or Pat Token (Required)
 - `release-tag` - Release Tag (Required)
 - `asset-names` - comma seperated value for asset names (Required)
+- `path` - Destination path. Defaults to $GITHUB_WORKSPACE (Optional)
+- `repository` - The repository owner and the repository name joined together by "/". (Optional)
 
 ## Example
 
@@ -14,19 +16,12 @@ If you want to fetch all secrets
 
 ```yml
 
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-
-    - uses: vinayaja/publish-release-assets@main
-      with:
-        gh-token: ${{ github.token }}
-        release-tag: 'v1.0.0'
-        asset-names: 'assetname1.zip,assetname.txt'
-        
+- uses: vinayaja/publish-release-assets@1.1.0
+  with:
+    gh-token: ${{ github.token }}
+    release-tag: 'v1.0.0'
+    asset-names: 'assetname1.zip,assetname.txt'
+    path: '${{ github.workspace }}\artifacts'
+    repository: 'owner/repo'
 ```
 
