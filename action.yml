@@ -1,4 +1,4 @@
-name: "Download Release Assets"
+name: "Download Release Asset"
 description: "Download assets from Github Release"
 author: "Vinayak Jadhav"
 
