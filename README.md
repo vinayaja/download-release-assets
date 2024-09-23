@@ -1,6 +1,8 @@
-# Upload assets to release as artifacts
+# Download assets from release as artifacts
 
-Simple GitHub Action to Upload assets to release as artifacts  
+Simple GitHub Action to Download assets to release as artifacts.
+
+See also [publish-release-assets](https://github.com/marketplace/actions/publish-release-assets).
 
 ## Inputs
 
