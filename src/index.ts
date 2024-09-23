@@ -6,7 +6,7 @@ export async function run() {
     const releaseTag = getInput("release-tag");
     const assetNames = getInput("asset-names");
     const path = getInput("path") || `${process.env.GITHUB_WORKSPACE}`;
-    const repository = getInput("path") || `${context.repo.owner}/${context.repo.repo}`;
+    const repository = getInput("repository") || `${context.repo.owner}/${context.repo.repo}`;
     const octoKit = getOctokit(token);
     
     try{         

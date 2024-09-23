@@ -31104,7 +31104,7 @@ async function run() {
     const releaseTag = (0, core_1.getInput)("release-tag");
     const assetNames = (0, core_1.getInput)("asset-names");
     const path = (0, core_1.getInput)("path") || `${process.env.GITHUB_WORKSPACE}`;
-    const repository = (0, core_1.getInput)("path") || `${github_1.context.repo.owner}/${github_1.context.repo.repo}`;
+    const repository = (0, core_1.getInput)("repository") || `${github_1.context.repo.owner}/${github_1.context.repo.repo}`;
     const octoKit = (0, github_1.getOctokit)(token);
     try {
         const releaseId = (await octoKit.rest.repos.getReleaseByTag({
