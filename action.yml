@@ -16,7 +16,7 @@ inputs:
     description: "Destination path. Defaults to $GITHUB_WORKSPACE"
     required: false
   repository:
-    description: "The repository owner and the repository name joined together by "/"."
+    description: "The repository owner and the repository name joined together by /"
     required: false
 
 runs:
