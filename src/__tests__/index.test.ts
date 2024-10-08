@@ -1,112 +1,90 @@
 import {expect, jest, it, describe, beforeEach,afterEach} from '@jest/globals'
 
-import { run } from "../index";
 import { getInput, setFailed } from "@actions/core";
-import { context, getOctokit } from "@actions/github";
-import { readFileSync, writeFileSync } from "fs"
+import { context, getOctokit } from "@actions/github"; 
+import { run } from "../index";
 
-jest.mock("@actions/core", () => ({
-  getInput: jest.fn(),
-  setFailed: jest.fn(),
-}));
+jest.mock("@actions/core");
+jest.mock("@actions/github");
 
-jest.mock("fs", () => ({
-  readFileSync: jest.fn(),
-  writeFileSync: jest.fn(),
-}));
-
-jest.mock("@actions/github", () => ({
-  context: {
-    repo: { owner: "owner", repo: "repo" },
-  },
-  getOctokit: jest.fn(),
-}));
+const mockedGetInput = getInput as jest.MockedFunction<typeof getInput>;
+const mockedSetFailed = setFailed as jest.MockedFunction<typeof setFailed>;
+const mockedGetOctokit = getOctokit as jest.MockedFunction<typeof getOctokit>;
 
 describe("run", () => {
-  let mockOctokit:any;
-
   beforeEach(() => {
-    mockOctokit = {
+    jest.clearAllMocks();
+  });
+
+  it("should call getReleaseByTag with correct parameters", async () => {
+    mockedGetInput.mockReturnValueOnce("fake-token")
+                  .mockReturnValueOnce("v1.0.0")
+                  .mockReturnValueOnce("asset1,asset2")
+                  .mockReturnValueOnce("/fake/path")
+                  .mockReturnValueOnce("owner/repo");
+
+    const octokitMock = {
       rest: {
-        repos: { get: jest.fn() },
-        actions: {
-          listRepoVariables: jest.fn(),
-          listEnvironmentVariables: jest.fn(),
-          listOrgVariables: jest.fn(),
-        },
-      },
+        repos: {
+          getReleaseByTag: jest.fn(async () => ({ data: { id: 123 } })),
+          listReleaseAssets: jest.fn(async () => ({ data: [{ id: 1, name: "asset1" }, { id: 2, name: "asset2" }] })),
+          getReleaseAsset: jest.fn(async () => ({ data: { id: 1, name: "asset1", browser_download_url: "http://fakeurl" } }))
+        }
+      }
     };
-    jest.clearAllMocks();
-    (getOctokit as jest.Mock).mockReturnValue(mockOctokit);
-  });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  // Test successful token replacement for environment variables
-  it("replaces tokens with environment variables", async () => {
-    const mockPayload = {};
-    const token = "my-token";
-    const envName = "";
-    const orgName = "";
-    const filesPath = "path/to/files";
-    const fileName = "file.txt";
-    const tokenPrefix = "#{";
-    const tokenSuffix = "}";
-    const envVar1 = "VAR1";
-    const envVar2 = "VAR2";
-    const envVarValue1 = "value1";
-    const envVarValue2 = "value2";
-    const fileContent = `This is a test with <span class="math-inline">\{tokenPrefix\}</span>{envVar1}${tokenSuffix} and <span class="math-inline">\{tokenPrefix\}</span>{envVar2}${tokenSuffix}`;
-
-    process.env[envVar1] = envVarValue1;
-    process.env[envVar2] = envVarValue2;
-
-    (getInput as jest.Mock).mockReturnValueOnce(token)
-      .mockReturnValueOnce(envName)
-      .mockReturnValueOnce(orgName)
-      .mockReturnValueOnce(filesPath)
-      .mockReturnValueOnce(fileName)
-      .mockReturnValueOnce(tokenPrefix)
-      .mockReturnValueOnce(tokenSuffix);
-
-    mockOctokit.rest.repos.get.mockReturnValue({ data: { id: 123 } });
-    (readFileSync as jest.Mock).mockReturnValueOnce(fileContent);
+    mockedGetOctokit.mockReturnValue(octokitMock as any);
 
     await run();
 
-    expect(getInput).toHaveBeenCalledTimes(7); // Includes all inputs
+    expect(octokitMock.rest.repos.getReleaseByTag).toHaveBeenCalledWith({
+      owner: "owner",
+      repo: "repo",
+      tag: "v1.0.0",
+      headers: {
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    });
 
-    expect(readFileSync).toHaveBeenCalledWith(`<span class="math-inline">\{filesPath\}/</span>{fileName}`, 'utf-8');
-    expect(writeFileSync).toHaveBeenCalledWith(`<span class="math-inline">\{filesPath\}/</span>{fileName}`, expect.stringMatching(new RegExp(`<span class="math-inline">\{envVarValue1\}\|</span>{envVarValue2}`, 'g'))); // Ensure both variables replaced
+    expect(octokitMock.rest.repos.listReleaseAssets).toHaveBeenCalledWith({
+      owner: "owner",
+      repo: "repo",
+      release_id: 123,
+      headers: {
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    });
 
-    expect(setFailed).not.toHaveBeenCalled();
+    expect(octokitMock.rest.repos.getReleaseAsset).toHaveBeenCalledWith({
+      owner: "owner",
+      repo: "repo",
+      release_id: 123,
+      asset_id: 1,
+      headers: {
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    });
   });
 
-  // Test successful token replacement for additional variables
-  it("replaces tokens with additional variables", async () => {
-    const mockPayload = {};
-    const token = "my-token";
-    const envName = "";
-    const orgName = "";
-    const filesPath = "path/to/files";
-    const fileName = "file.txt";
-    const tokenPrefix = "#{";
-    const tokenSuffix = "}";
-    const addVar1 = "ADD_VAR1";
-    const addVar2 = "ADD_VAR2";
-    const addVarValue1 = "add_value1";
-    const addVarValue2 = "add_value2";
-    const fileContent = `This is a test with <span class="math-inline">\{tokenPrefix\}</span>{addVar1}${tokenSuffix} and <span class="math-inline">\{tokenPrefix\}</span>{addVar2}${tokenSuffix}`;
+  it("should call setFailed if an error occurs", async () => {
+    mockedGetInput.mockReturnValueOnce("fake-token")
+                  .mockReturnValueOnce("v1.0.0")
+                  .mockReturnValueOnce("asset1,asset2")
+                  .mockReturnValueOnce("/fake/path")
+                  .mockReturnValueOnce("owner/repo");
 
-    (getInput as jest.Mock).mockReturnValueOnce(token)
-      .mockReturnValueOnce(envName)
-      .mockReturnValueOnce(orgName)
-      .mockReturnValueOnce(filesPath)
-      .mockReturnValueOnce(fileName)
-      .mockReturnValueOnce(tokenPrefix)
-      .mockReturnValueOnce(tokenSuffix);
+    const octokitMock = {
+      rest: {
+        repos: {
+          getReleaseByTag: jest.fn(async () => { throw new Error("Fake error"); })
+        }
+      }
+    };
 
+    mockedGetOctokit.mockReturnValue(octokitMock as any);
+
+    await run();
+
+    expect(mockedSetFailed).toHaveBeenCalledWith("Fake error");
   });
 });
